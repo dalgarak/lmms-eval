@@ -205,7 +205,7 @@ class Huggingface(lmms):
         total_tokens = 0
         for chunk in chunks:
             ctx, doc_to_messages, all_gen_kwargs, doc_id, task, split = zip(*chunk)
-            chat_messages = [doc_to_messages[0](self.task_dict[task][split][ids]) for ids, task, split in zip(doc_id, task, split)]
+            chat_messages = [dtm(self.task_dict[t][sp][ids]) for dtm, ids, t, sp in zip(doc_to_messages, doc_id, task, split)]
             if self.system_prompt:
                 chat_messages = [self._apply_system_prompt(messages, self.system_prompt) for messages in chat_messages]
             chat_messages: List[ChatMessages] = [ChatMessages(**{"messages": message}) for message in chat_messages]
