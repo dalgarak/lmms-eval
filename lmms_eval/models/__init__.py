@@ -124,6 +124,7 @@ AVAILABLE_SIMPLE_MODELS = {
 }
 
 AVAILABLE_CHAT_TEMPLATE_MODELS = {
+    "scieagle_granite": "SciEagleGranite",
     "gemini": "Gemini",
     "aero_realtime_vllm": "AeroRealtimeVLLM",
     "bagel_lmms_engine": "BagelLmmsEngine",
