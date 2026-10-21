@@ -6,7 +6,7 @@ dataset_name: TQA-2024-09-21
 output_type: generate_until
 doc_to_visual: !function utils.livexiv_doc_to_visual
 doc_to_text: !function utils.livexiv_doc_to_text
-doc_to_target: "answer"
+doc_to_target: "{{gt}}"
 generation_kwargs:
   until:
     - "ASSISTANT:"
@@ -15,6 +15,9 @@ process_results: !function utils.livexiv_process_result
 process_results_use_image: true
 metric_list:
   - metric: livexiv_tqa
+    aggregation: !function utils.livexiv_aggregation_result
+    higher_is_better: true
+  - metric: livexiv_tqa_lenient
     aggregation: !function utils.livexiv_aggregation_result
     higher_is_better: true
 metadata:

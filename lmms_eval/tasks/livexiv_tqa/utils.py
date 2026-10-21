@@ -9,6 +9,27 @@ def extract_answer(text):
     return None
 
 
+def extract_choice(text):
+    """서술형 응답에서 선택지 글자(A-D)를 뽑는다. 못 찾으면 None.
+    순서: 글자 하나만 있는 응답 -> 마지막 'Answer: X' -> 마지막 'answer is X' / 'option X' -> 응답 맨 앞의 'X.' 형태."""
+    if not text:
+        return None
+    t = text.strip()
+    m = re.fullmatch(r"\(?\**([A-D])\**\)?[\.\)]?", t)
+    if m:
+        return m.group(1)
+    m = re.findall(r"[Aa]nswer\s*[:：]\s*\(?\**([A-D])\b", t)
+    if m:
+        return m[-1]
+    m = re.findall(r"(?:[Aa]nswer\s+is|[Oo]ption|[Cc]hoice)\s*\(?\**([A-D])\b", t)
+    if m:
+        return m[-1]
+    m = re.match(r"^\(?([A-D])[\.\)\:]\s", t)
+    if m:
+        return m.group(1)
+    return None
+
+
 def livexiv_doc_to_visual(doc):
     return [doc["image"].convert("RGB")]
 
@@ -31,7 +52,10 @@ def livexiv_process_result(doc, result):
             pred = pred[0]
     answer = doc["gt"]
 
-    return {"livexiv_tqa": {"pred": pred, "answer": answer}}
+    return {
+        "livexiv_tqa": {"pred": pred, "answer": answer},
+        "livexiv_tqa_lenient": {"pred": extract_choice(result[0]), "answer": answer},
+    }
 
 
 def livexiv_aggregation_result(results):

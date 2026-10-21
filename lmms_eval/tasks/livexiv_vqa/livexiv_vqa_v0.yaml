@@ -1,0 +1,8 @@
+task: "livexiv_vqa_v0"
+include: livexiv_vqa_template_yaml
+dataset_path: parquet
+dataset_name: null
+dataset_kwargs:
+  data_files:
+    test: "hf://datasets/LiveXiv/LiveXiv/v0/VQA/test-*.parquet"
+  token: True
