@@ -51,6 +51,34 @@ def rxnbench_doc_to_text(doc, lmms_eval_specific_kwargs=None):
 def _get_target(doc):
     return ["A", "B", "C", "D"][int(doc["answer"])]
 
+
+# \boxed{} 출력과 서술형 출력에서 선택지 글자를 뽑는다. (utils_zh.py 와 같은 내용을 유지한다)
+# \boxed{...} 안쪽(중첩 중괄호 1단계까지)
+_BOXED_RE = re.compile(r"\\boxed\s*\{((?:[^{}]|\{[^{}]*\})*)\}")
+# 'Answer: X' / 'answer is X' / 'option X'. 대문자는 어디서든, 소문자는 응답 맨 끝일 때만 인정한다("the answer is a mixture" 방지).
+_MARKER_RE = re.compile(
+    r"(?i:answer|option|choice)(?:\s+is)?\s*[:：]?\s*\(?\**\s*([A-D]|[a-d](?=\s*[.)*]*\s*$))(?![A-Za-z])"
+)
+# 단독 대문자 글자. 'C=O' 같은 화학식은 제외한다.
+_LETTER_RE = re.compile(r"(?<![A-Za-z0-9=])([A-D])(?![A-Za-z0-9=])")
+_STRIP_RE = re.compile(r"\\(?:text|textbf|mathrm|mathbf)\s*\{|[{}()\s.\*]")
+
+
+def _extract_choice(pred):
+    # 1) 마지막 \boxed{} 안이 글자 하나일 때만 인정한다(\boxed{Acetone} 같은 단어는 제외). 대소문자 무시.
+    for inner in reversed(_BOXED_RE.findall(pred)):
+        cleaned = _STRIP_RE.sub("", inner)
+        if len(cleaned) == 1 and cleaned.lower() in "abcd":
+            return cleaned.lower()
+    # 2) 마지막 명시적 표지
+    marked = _MARKER_RE.findall(pred)
+    if marked:
+        return marked[-1].lower()
+    # 3) 단독 대문자 글자의 마지막 매칭(결론은 뒤에 온다)
+    letters = _LETTER_RE.findall(pred)
+    return letters[-1].lower() if letters else ""
+
+
 def rxnbench_process_results(doc, results):
     raw_pred = results[0] if results else ""
 
@@ -62,8 +90,7 @@ def rxnbench_process_results(doc, results):
     if pred.lower() == target:
         score = 1.0
     else:
-        match = re.search(r"([A-D])", pred, re.IGNORECASE)
-        if match and match.group(1).lower() == target:
+        if _extract_choice(pred) == target:
             score = 1.0
 
     prompt_text = rxnbench_doc_to_text(doc)
@@ -73,3 +100,4 @@ def rxnbench_process_results(doc, results):
         "raw_output": raw_pred,
         "question": prompt_text
     }
+
